@@ -13,11 +13,16 @@ const App = () => {
   const [error, setError] = useState(true);
 
   const checkServer = () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       fetch("http://localhost:5000/tasks")
-        .then(() => setError(false))
-        .catch(() => setError(true))
-        .finally(() => resolve());
+        .then(() => {
+          setError();
+          resolve();
+        })
+        .catch(() => {
+          setError(true);
+          reject();
+        });
     });
   };
 
@@ -55,94 +60,73 @@ const App = () => {
     setShowAddTask(!showAddTask);
   };
 
+  const onError = () => {
+    setShowAddTask(false);
+    setTasks([]);
+
+    setTimeout(() => {
+      alert("Server disconnected");
+    }, 100);
+  };
+
   // Add Task
   const addTask = (task) => {
-    const add = async () => {
-      const res = await fetch(`http://localhost:5000/tasks`, {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify(task),
-      });
+    checkServer()
+      .then(async () => {
+        const res = await fetch(`http://localhost:5000/tasks`, {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify(task),
+        });
 
-      const data = await res.json();
-      setTasks([...tasks, data]);
-    };
-
-    checkServer().then(() => {
-      if (!error) {
-        setShowAddTask(false);
-        setTasks([]);
-
-        setTimeout(() => {
-          alert("Server disconnected");
-        }, 100);
-      } else {
-        add();
-      }
-    });
+        const data = await res.json();
+        setTasks([...tasks, data]);
+      })
+      .catch(onError);
   };
 
   // Delete Task
   const deleteTask = (id) => {
-    checkServer().then(() => {
-      if (!error) {
-        setShowAddTask(false);
-        setTasks([]);
+    checkServer()
+      .then(async () => {
+        await fetch(`http://localhost:5000/tasks/${id}`, {
+          method: "DELETE",
+        });
 
-        setTimeout(() => {
-          alert("Server disconnected");
-        }, 100);
-      } else {
-        del();
-      }
-    });
-
-    const del = async () => {
-      await fetch(`http://localhost:5000/tasks/${id}`, {
-        method: "DELETE",
-      });
-
-      setTasks(tasks.filter((task) => task.id !== id));
-    };
+        setTasks(tasks.filter((task) => task.id !== id));
+      })
+      .catch(onError);
   };
 
   // Toggle Reminder
   const toggleReminder = (id) => {
-    checkServer().then(() => {
-      if (!error) {
-        setShowAddTask(false);
-        setTasks([]);
+    checkServer()
+      .then(async () => {
+        const taskToToggle = await fetchTask(id);
+        const updatedTask = {
+          ...taskToToggle,
+          reminder: !taskToToggle.reminder,
+        };
 
-        setTimeout(() => {
-          alert("Server disconnected");
-        }, 100);
-      } else {
-        toggle();
-      }
-    });
+        const res = await fetch(`http://localhost:5000/tasks/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify(updatedTask),
+        });
 
-    const toggle = async () => {
-      const taskToToggle = await fetchTask(id);
-      const updatedTask = { ...taskToToggle, reminder: !taskToToggle.reminder };
+        const data = await res.json();
 
-      const res = await fetch(`http://localhost:5000/tasks/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify(updatedTask),
-      });
-
-      const data = await res.json();
-
-      setTasks(
-        tasks.map((task) =>
-          task.id === id ? { ...task, reminder: data.reminder } : task
-        )
-      );
-    };
+        setTasks(
+          tasks.map((task) =>
+            task.id === id ? { ...task, reminder: data.reminder } : task
+          )
+        );
+      })
+      .catch(onError);
   };
 
   return (
