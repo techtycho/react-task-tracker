@@ -10,15 +10,28 @@ import TaskDetails from "./components/TaskDetails";
 const App = () => {
   const [showAddTask, setShowAddTask] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [error, setError] = useState(true);
+
+  useEffect(() => {
+    const checkServer = () => {
+      fetch("http://localhost:5000/tasks")
+        .then(() => setError(false))
+        .catch(() => setError(true));
+    };
+
+    checkServer();
+  });
 
   useEffect(() => {
     const getTasks = async () => {
-      const tasksFromServer = await fetchTasks();
-      setTasks(tasksFromServer);
+      if (!error) {
+        const data = await fetchTasks();
+        setTasks(data);
+      }
     };
 
     getTasks();
-  }, []);
+  }, [error]);
 
   // Fetch Tasks
   const fetchTasks = async () => {
@@ -86,7 +99,7 @@ const App = () => {
   return (
     <Router>
       <div className="container">
-        <Header onShowForm={showForm} showAddTask={showAddTask} />
+        <Header onShowForm={showForm} showAddTask={showAddTask} error={error} />
         <Routes>
           <Route
             path="/"
@@ -100,7 +113,9 @@ const App = () => {
                     onToggle={toggleReminder}
                   />
                 ) : (
-                  "No Tasks To Show"
+                  `${
+                    error ? "Cannot connect to the server" : "No Tasks to show"
+                  }`
                 )}
               </>
             }

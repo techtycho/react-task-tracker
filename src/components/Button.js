@@ -1,12 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const Button = ({ text, color, onClick }) => {
+const Button = ({ text, color, onClick, disabled }) => {
   return (
     <button
       onClick={onClick}
-      style={{ backgroundColor: color }}
-      className="btn"
+      style={disabled ? {} : { backgroundColor: color }}
+      className={`btn ${disabled && "disabled"}`}
+      title={disabled && "Cannot connect to the server"}
     >
       {text}
     </button>
