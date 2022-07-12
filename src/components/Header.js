@@ -12,7 +12,7 @@ const Header = ({ title, onShowForm, showAddTask, error }) => {
       {location.pathname === "/" && (
         <Button
           disabled={error}
-          onClick={onShowForm}
+          onClick={!error && onShowForm}
           color={showAddTask ? "red" : "green"}
           text={showAddTask ? "Close" : "Add"}
         />
