@@ -18,7 +18,7 @@ const Task = ({ task, onDelete, onToggle }) => {
       <p>{task.day}</p>
       <Link
         to={`/tasks/${task.id}`}
-        style={{ display: "inline-block", marginTop: "5px" }}
+        style={{ marginTop: "5px", display: "inline-block" }}
       >
         View Details
       </Link>
