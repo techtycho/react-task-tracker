@@ -12,13 +12,16 @@ const App = () => {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(true);
 
-  useEffect(() => {
-    const checkServer = () => {
+  const checkServer = () => {
+    return new Promise((resolve) => {
       fetch("http://localhost:5000/tasks")
         .then(() => setError(false))
-        .catch(() => setError(true));
-    };
+        .catch(() => setError(true))
+        .finally(() => resolve());
+    });
+  };
 
+  useEffect(() => {
     checkServer();
   });
 
@@ -53,47 +56,93 @@ const App = () => {
   };
 
   // Add Task
-  const addTask = async (task) => {
-    const res = await fetch(`http://localhost:5000/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify(task),
-    });
+  const addTask = (task) => {
+    const add = async () => {
+      const res = await fetch(`http://localhost:5000/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(task),
+      });
 
-    const data = await res.json();
-    setTasks([...tasks, data]);
+      const data = await res.json();
+      setTasks([...tasks, data]);
+    };
+
+    checkServer().then(() => {
+      if (!error) {
+        setShowAddTask(false);
+        setTasks([]);
+
+        setTimeout(() => {
+          alert("Server disconnected");
+        }, 100);
+      } else {
+        add();
+      }
+    });
   };
 
   // Delete Task
-  const deleteTask = async (id) => {
-    await fetch(`http://localhost:5000/tasks/${id}`, {
-      method: "DELETE",
+  const deleteTask = (id) => {
+    checkServer().then(() => {
+      if (!error) {
+        setShowAddTask(false);
+        setTasks([]);
+
+        setTimeout(() => {
+          alert("Server disconnected");
+        }, 100);
+      } else {
+        del();
+      }
     });
 
-    setTasks(tasks.filter((task) => task.id !== id));
+    const del = async () => {
+      await fetch(`http://localhost:5000/tasks/${id}`, {
+        method: "DELETE",
+      });
+
+      setTasks(tasks.filter((task) => task.id !== id));
+    };
   };
 
   // Toggle Reminder
-  const toggleReminder = async (id) => {
-    const taskToToggle = await fetchTask(id);
-    const updatedTask = { ...taskToToggle, reminder: !taskToToggle.reminder };
+  const toggleReminder = (id) => {
+    checkServer().then(() => {
+      if (!error) {
+        setShowAddTask(false);
+        setTasks([]);
 
-    const res = await fetch(`http://localhost:5000/tasks/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify(updatedTask),
+        setTimeout(() => {
+          alert("Server disconnected");
+        }, 100);
+      } else {
+        toggle();
+      }
     });
-    const data = await res.json();
 
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, reminder: data.reminder } : task
-      )
-    );
+    const toggle = async () => {
+      const taskToToggle = await fetchTask(id);
+      const updatedTask = { ...taskToToggle, reminder: !taskToToggle.reminder };
+
+      const res = await fetch(`http://localhost:5000/tasks/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(updatedTask),
+      });
+
+      const data = await res.json();
+
+      setTasks(
+        tasks.map((task) =>
+          task.id === id ? { ...task, reminder: data.reminder } : task
+        )
+      );
+    };
   };
 
   return (

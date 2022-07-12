@@ -7,7 +7,7 @@ const Button = ({ text, color, onClick, disabled }) => {
       onClick={onClick}
       style={disabled ? {} : { backgroundColor: color }}
       className={`btn ${disabled && "disabled"}`}
-      title={disabled && "Cannot connect to the server"}
+      title={disabled ? "Cannot connect to the server" : ""}
     >
       {text}
     </button>
